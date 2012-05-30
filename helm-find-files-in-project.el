@@ -57,7 +57,7 @@
     (when (helm-find-files-in-project-find-project-root)
       (split-string
        (shell-command-to-string
-        (format "find %s | grep -v '%s'"
+        (format "find %s -type f | grep -v '%s'"
                 project-root
                 helm-find-files-in-project-filter-pattern))
        "\n"))))
