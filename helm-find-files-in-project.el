@@ -27,7 +27,7 @@
 ;;; find files in current project
 
 (defvar helm-find-files-in-project-filter-pattern
-  "\\~\\|\\.git\\|target/\\|\\.class")
+  "\\~\\|\\.git\\|target/\\|\\.class\\|\\.svn")
 
 (defun helm-find-files-in-project-dirname (file)
   (chomp (shell-command-to-string (format "dirname %s" file))))
