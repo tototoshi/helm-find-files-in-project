@@ -1,6 +1,6 @@
 ;;; helm-find-files-in-project.el --- Find files in project from helm
 
-;; Copyright (C) 2012  Toshiyuki Takahashi
+;; Copyright (C) 2012-2013  Toshiyuki Takahashi
 
 ;; Author: Toshiyuki Takahashi (@tototoshi)
 ;; Keywords:
