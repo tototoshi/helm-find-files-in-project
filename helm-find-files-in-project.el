@@ -26,41 +26,37 @@
 
 ;;; find files in current project
 
-(defvar helm-find-files-in-project-filter-pattern
+(defvar hffip:filter-pattern
   "\\~\\|\\.git\\|target/\\|\\.class\\|\\.svn")
 
-(defun helm-find-files-in-project-dirname (file)
+(defun hffip:dirname (file)
   (chomp (shell-command-to-string (format "dirname %s" file))))
 
-(defun helm-find-files-in-project-find-project-file (directory)
-  (find "^\\.git$\\|^pom\\.xml$\\|.+\\.sbt$\\|^build.xml$"
-        (directory-files directory)
-        :test #'(lambda (x y) (string-match (concat x "$") y))))
+(defun hffip:find-project-root ()
+  (expand-file-name
+   (or (locate-dominating-file default-directory ".git")
+       (locate-dominating-file default-directory "pom.xml")
+       (locate-dominating-file default-directory "build.sbt")
+       (locate-dominating-file default-directory "Gemfile")
+       (locate-dominating-file default-directory "setup.py"))))
 
-(defun helm-find-files-in-project-find-project-file-recursively (directory)
-  (cond ((and (string= "/" directory) (string= "/" (helm-find-files-in-project-dirname "/"))) nil)
-        ((helm-find-files-in-project-find-project-file directory)
-         (concat (file-name-as-directory directory)
-                 (helm-find-files-in-project-find-project-file directory)))
-        (t (helm-find-files-in-project-find-project-file-recursively
-            (helm-find-files-in-project-dirname directory)))))
+(defun hffip:remove-trailing-backslash (s)
+  (replace-regexp-in-string "/$" "" s))
 
-(defun helm-find-files-in-project-find-project-root ()
-  (let* ((current-directory (with-current-buffer helm-current-buffer
-                (helm-c-current-directory)))
-         (project-file (helm-find-files-in-project-find-project-file-recursively current-directory)))
-    (when project-file
-      (helm-find-files-in-project-dirname project-file))))
+(defun hffip:abspath-to-relative-path (abspath)
+  (replace-regexp-in-string (hffip:find-project-root) "" s))
 
 (defun helm-c-source-files-under-tree-candidates-function ()
-  (let ((project-root (helm-find-files-in-project-find-project-root)))
-    (when (helm-find-files-in-project-find-project-root)
-      (split-string
-       (shell-command-to-string
-        (format "find %s -type f | grep -v '%s'"
-                project-root
-                helm-find-files-in-project-filter-pattern))
-       "\n"))))
+  (let ((project-root (hffip:find-project-root)))
+    (when project-root
+      (mapcar
+       '(lambda (s) (hffip:abspath-to-relative-path s))
+       (split-string
+        (shell-command-to-string
+         (print (format "find %s -type f | grep -v '%s'"
+                        (hffip:remove-trailing-backslash project-root)
+                        hffip:filter-pattern)))
+        "\n")))))
 
 (defvar helm-c-source-files-in-project
   '((name . "Files in project")
