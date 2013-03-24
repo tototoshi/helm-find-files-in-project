@@ -53,15 +53,18 @@
        '(lambda (s) (hffip:abspath-to-relative-path s))
        (split-string
         (shell-command-to-string
-         (print (format "find %s -type f | grep -v '%s'"
+         (print (format "find %s | grep -v '%s'"
                         (hffip:remove-trailing-backslash project-root)
                         hffip:filter-pattern)))
         "\n")))))
 
+(defun hffip:find-file (file)
+  (find-file (concat (hffip:find-project-root) file)))
+
 (defvar helm-c-source-files-in-project
   '((name . "Files in project")
     (candidates . helm-c-source-files-under-tree-candidates-function)
-    (action . find-file)))
+    (action . hffip:find-file)))
 
 (defun helm-find-files-in-project ()
   (interactive)
