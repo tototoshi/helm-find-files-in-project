@@ -34,11 +34,11 @@
 
 (defun hffip:find-project-root ()
   (expand-file-name
-   (or (locate-dominating-file default-directory ".git")
-       (locate-dominating-file default-directory "pom.xml")
-       (locate-dominating-file default-directory "build.sbt")
-       (locate-dominating-file default-directory "Gemfile")
-       (locate-dominating-file default-directory "setup.py"))))
+   (or (locate-dominating-file current-directory ".git")
+       (locate-dominating-file current-directory "pom.xml")
+       (locate-dominating-file current-directory "build.sbt")
+       (locate-dominating-file current-directory "Gemfile")
+       (locate-dominating-file current-directory "setup.py"))))
 
 (defun hffip:remove-trailing-backslash (s)
   (replace-regexp-in-string "/$" "" s))
@@ -68,7 +68,8 @@
 
 (defun helm-find-files-in-project ()
   (interactive)
-  (helm 'helm-c-source-files-in-project))
+  (let ((current-directory default-directory))
+    (helm 'helm-c-source-files-in-project)))
 
 (provide 'helm-find-files-in-project)
 
