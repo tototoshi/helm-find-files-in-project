@@ -50,7 +50,7 @@
   (let ((project-root (hffip:find-project-root)))
     (when project-root
       (shell-command
-        (format "find %s | grep -v '%s'" (hffip:remove-trailing-backslash project-root) hffip:filter-pattern)
+        (format "find %s -type f | grep -v '%s'" (hffip:remove-trailing-backslash project-root) hffip:filter-pattern)
         buf)
       (with-current-buffer buf
         (goto-char (point-min))
