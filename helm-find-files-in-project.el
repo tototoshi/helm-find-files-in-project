@@ -1,6 +1,6 @@
 ;;; helm-find-files-in-project.el --- Find files in project from helm
 
-;; Copyright (C) 2012-2013  Toshiyuki Takahashi
+;; Copyright (C) 2012-2014  Toshiyuki Takahashi
 
 ;; Author: Toshiyuki Takahashi (@tototoshi)
 ;; Keywords:
@@ -46,24 +46,24 @@
 (defun hffip:abspath-to-relative-path (abspath)
   (replace-regexp-in-string (hffip:find-project-root) "" s))
 
-(defun helm-c-source-files-under-tree-candidates-function ()
+(defun helm-c-source-files-under-tree-candidates-function (buf)
   (let ((project-root (hffip:find-project-root)))
     (when project-root
-      (mapcar
-       '(lambda (s) (hffip:abspath-to-relative-path s))
-       (split-string
-        (shell-command-to-string
-         (print (format "find %s | grep -v '%s'"
-                        (hffip:remove-trailing-backslash project-root)
-                        hffip:filter-pattern)))
-        "\n")))))
+      (shell-command
+        (format "find %s | grep -v '%s'" (hffip:remove-trailing-backslash project-root) hffip:filter-pattern)
+        buf)
+      (with-current-buffer buf
+        (goto-char (point-min))
+        (replace-string project-root "")))))
 
 (defun hffip:find-file (file)
   (find-file (concat (hffip:find-project-root) file)))
 
-(defvar helm-c-source-files-in-project
+(setq helm-c-source-files-in-project
   '((name . "Files in project")
-    (candidates . helm-c-source-files-under-tree-candidates-function)
+    (init . (lambda ()
+              (helm-c-source-files-under-tree-candidates-function (helm-candidate-buffer 'global))))
+    (candidates-in-buffer)
     (action . hffip:find-file)))
 
 (defun helm-find-files-in-project ()
@@ -74,4 +74,3 @@
 (provide 'helm-find-files-in-project)
 
 ;;; helm-find-files-in-project.el ends here
-
