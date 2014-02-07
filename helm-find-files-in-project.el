@@ -27,19 +27,17 @@
 
 ;;; find files in current project
 
-(defvar hffip:filter-pattern
-  "\\~\\|\\.git\\|target/\\|\\.class\\|\\.svn")
-
 (defun hffip:dirname (file)
   (chomp (shell-command-to-string (format "dirname %s" file))))
 
 (defun hffip:find-project-root ()
   (expand-file-name
-   (or (locate-dominating-file current-directory ".git")
-       (locate-dominating-file current-directory "pom.xml")
-       (locate-dominating-file current-directory "build.sbt")
-       (locate-dominating-file current-directory "Gemfile")
-       (locate-dominating-file current-directory "setup.py"))))
+   (or (locate-dominating-file default-directory ".git")
+       (locate-dominating-file default-directory ".svn")
+       (locate-dominating-file default-directory "pom.xml")
+       (locate-dominating-file default-directory "build.sbt")
+       (locate-dominating-file default-directory "Gemfile")
+       (locate-dominating-file default-directory "setup.py"))))
 
 (defun hffip:remove-trailing-backslash (s)
   (replace-regexp-in-string "/$" "" s))
@@ -47,15 +45,19 @@
 (defun hffip:abspath-to-relative-path (abspath)
   (replace-regexp-in-string (hffip:find-project-root) "" s))
 
+(defun hffip:git-project-p ()
+  (locate-dominating-file default-directory ".git"))
+
+(defun helm-c-sources-files-git-project-function (buf)
+  (shell-command (format "cd %s; git ls-files" (hffip:find-project-root)) buf))
+
 (defun helm-c-source-files-under-tree-candidates-function (buf)
   (let ((project-root (hffip:find-project-root)))
-    (when project-root
-      (shell-command
-        (format "find %s -type f | grep -v '%s'" (hffip:remove-trailing-backslash project-root) hffip:filter-pattern)
-        buf)
-      (with-current-buffer buf
-        (goto-char (point-min))
-        (replace-string project-root "")))))
+    (shell-command
+     (format "find %s -type f" (hffip:remove-trailing-backslash project-root)) buf)
+    (with-current-buffer buf
+      (goto-char (point-min))
+      (replace-string project-root ""))))
 
 (defun hffip:find-file (file)
   (find-file (concat (hffip:find-project-root) file)))
@@ -63,14 +65,14 @@
 (setq helm-c-source-files-in-project
   '((name . "Files in project")
     (init . (lambda ()
-              (helm-c-source-files-under-tree-candidates-function (helm-candidate-buffer 'global))))
+              (cond ((hffip:git-project-p) (helm-c-sources-files-git-project-function (helm-candidate-buffer 'global)))
+                    (t (helm-c-source-files-under-tree-candidates-function (helm-candidate-buffer 'global))))))
     (candidates-in-buffer)
     (action . hffip:find-file)))
 
 (defun helm-find-files-in-project ()
   (interactive)
-  (let ((current-directory default-directory))
-    (helm 'helm-c-source-files-in-project)))
+  (helm 'helm-c-source-files-in-project))
 
 (provide 'helm-find-files-in-project)
 
